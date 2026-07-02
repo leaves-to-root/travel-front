@@ -5,16 +5,17 @@ import { getMyOrders } from '@/api/order'
 
 const router = useRouter()
 const orders = ref<any[]>([])
-const status = ref<number|undefined>(undefined)
+const status = ref<number|string>('all')
 const loading = ref(false)
 const page = ref(1)
 const total = ref(0)
-const tabs = [{label:'全部',value:undefined},{label:'待支付',value:0},{label:'已支付',value:1},{label:'已完成',value:2},{label:'已取消',value:3}]
+const tabs = [{label:'全部',value:'all'},{label:'待支付',value:0},{label:'已支付',value:1},{label:'已完成',value:2},{label:'已取消',value:3}]
 
 async function load() {
   loading.value = true
   try {
-    const res: any = await getMyOrders({ page: page.value, size: 10, status: status.value })
+    const statusParam = status.value === 'all' ? undefined : Number(status.value)
+    const res: any = await getMyOrders({ page: page.value, size: 10, status: statusParam })
     orders.value = res.records || []
     total.value = res.total || 0
   } catch { orders.value = [] }

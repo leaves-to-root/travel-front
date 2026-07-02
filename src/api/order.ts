@@ -5,6 +5,10 @@ export function createOrder(data: CreateOrderRequest) {
   return post('/api/order/create', data)
 }
 
+export function createBatchOrder(data: CreateOrderRequest[]) {
+  return post('/api/order/createBatch', data)
+}
+
 export function payOrder(orderId: number) {
   return get('/api/order/pay/' + orderId)
 }
