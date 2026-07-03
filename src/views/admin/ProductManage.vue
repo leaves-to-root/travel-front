@@ -1,15 +1,20 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { getProductList, saveProduct, toggleProductStatus, deleteProduct } from '@/api/admin/adminProduct'
+import { getCategoryList } from '@/api/admin/adminCategory'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const products = ref<any[]>([]); const total = ref(0); const page = ref(1)
 const dialog = ref(false); const form = ref<any>({})
 const keyword = ref('')
+const categories = ref<any[]>([])
 async function load() {
   try { const r: any = await getProductList({ page: page.value, size: 10, keyword: keyword.value || undefined }); products.value = r.records || []; total.value = r.total || 0 } catch {}
 }
-onMounted(load)
+async function loadCategories() {
+  try { categories.value = await getCategoryList(0) || [] } catch {}
+}
+onMounted(() => { load(); loadCategories() })
 async function handleSave() { await saveProduct(form.value); ElMessage.success('保存成功'); dialog.value = false; load() }
 function edit(p: any) { form.value = { ...p }; dialog.value = true }
 function newP() { form.value = { title: '', price: 0, stock: 0 }; dialog.value = true }
@@ -42,6 +47,11 @@ async function del(id: number) { await ElMessageBox.confirm('确认删除？'); 
     <el-pagination v-if="total>10" v-model:current-page="page" :total="total" @current-change="load" />
     <el-dialog v-model="dialog" :title="form.id?'编辑产品':'新增产品'" width="700px">
       <el-form :model="form" label-width="80px">
+        <el-form-item label="分类">
+          <el-select v-model="form.categoryId" placeholder="请选择父分类" style="width:100%">
+            <el-option v-for="c in categories" :key="c.id" :label="c.name" :value="c.id" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="标题"><el-input v-model="form.title" /></el-form-item>
         <el-form-item label="副标题"><el-input v-model="form.subtitle" /></el-form-item>
         <el-form-item label="价格"><el-input-number v-model="form.price" :min="0" /></el-form-item>
