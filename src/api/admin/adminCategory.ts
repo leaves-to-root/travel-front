@@ -1,7 +1,7 @@
 import { get, post, del } from '../request'
 
-export function getCategoryList() {
-  return get('/api/admin/category/list')
+export function getCategoryList(parentId?: number) {
+  return get('/api/admin/category/list', parentId !== undefined ? { parentId } : undefined)
 }
 
 export function saveCategory(data: any) {
