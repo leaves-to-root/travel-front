@@ -1,19 +1,41 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { register } from '@/api/auth'
+import { register, sendEmailCode } from '@/api/auth'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
-const form = ref({ username: '', phone: '', password: '', confirmPassword: '', nickname: '' })
+const form = ref({ username: '', email: '', emailCode: '', password: '', confirmPassword: '', nickname: '' })
 const loading = ref(false)
+const emailSending = ref(false)
+const emailCountdown = ref(0)
+
+async function handleSendEmailCode() {
+  if (!form.value.email) { ElMessage.warning('请输入邮箱'); return }
+  emailSending.value = true
+  try {
+    await sendEmailCode(form.value.email)
+    ElMessage.success('验证码已发送')
+    emailCountdown.value = 60
+    const timer = setInterval(() => {
+      emailCountdown.value--
+      if (emailCountdown.value <= 0) clearInterval(timer)
+    }, 1000)
+  } catch (err: any) { ElMessage.error(err.message || '发送失败') }
+  finally { emailSending.value = false }
+}
 
 async function handleRegister() {
+  if (!form.value.email) { ElMessage.warning('请输入邮箱'); return }
+  if (!form.value.emailCode) { ElMessage.warning('请输入邮箱验证码'); return }
   if (form.value.password !== form.value.confirmPassword) { ElMessage.warning('两次密码不一致'); return }
   if (form.value.password.length < 6) { ElMessage.warning('密码至少6位'); return }
   loading.value = true
-  try { await register(form.value); ElMessage.success('注册成功'); router.push('/login') }
-  catch (err: any) { ElMessage.error(err.message || '注册失败') }
+  try {
+    await register(form.value)
+    ElMessage.success('注册成功')
+    router.push('/login')
+  } catch (err: any) { ElMessage.error(err.message || '注册失败') }
   finally { loading.value = false }
 }
 </script>
@@ -28,8 +50,18 @@ async function handleRegister() {
       <p>开启你的旅行之旅</p>
     </div>
     <el-form :model="form" @keyup.enter="handleRegister">
-      <el-form-item><el-input v-model="form.username" placeholder="用户名" size="large" class="auth-input" /></el-form-item>
-      <el-form-item><el-input v-model="form.phone" placeholder="手机号" size="large" class="auth-input" /></el-form-item>
+      <el-form-item>
+        <el-input v-model="form.email" placeholder="邮箱（必填）" size="large" class="auth-input" />
+      </el-form-item>
+      <el-form-item>
+        <div style="display:flex;gap:12px;width:100%">
+          <el-input v-model="form.emailCode" placeholder="邮箱验证码" size="large" class="auth-input" style="flex:1" />
+          <el-button size="large" :loading="emailSending" :disabled="emailCountdown > 0" @click="handleSendEmailCode" style="white-space:nowrap">
+            {{ emailCountdown > 0 ? emailCountdown + 's' : '发送验证码' }}
+          </el-button>
+        </div>
+      </el-form-item>
+      <el-form-item><el-input v-model="form.username" placeholder="用户名（选填）" size="large" class="auth-input" /></el-form-item>
       <el-form-item><el-input v-model="form.nickname" placeholder="昵称（选填）" size="large" class="auth-input" /></el-form-item>
       <el-form-item><el-input v-model="form.password" type="password" placeholder="密码（至少6位）" size="large" show-password class="auth-input" /></el-form-item>
       <el-form-item><el-input v-model="form.confirmPassword" type="password" placeholder="确认密码" size="large" show-password class="auth-input" /></el-form-item>

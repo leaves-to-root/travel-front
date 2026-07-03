@@ -10,7 +10,7 @@ export const useUserStore = defineStore('user', () => {
   const token = ref(getToken())
   const userInfo = ref<User | null>(null)
 
-  async function login(data: { username?: string; phone?: string; password: string }) {
+  async function login(data: { loginType?: string; username?: string; password?: string; captchaKey?: string; captchaCode?: string; email?: string; emailCode?: string }) {
     const res: any = await userLogin(data)
     token.value = res.token
     setToken(res.token)
@@ -41,7 +41,18 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  return { token, userInfo, login, setUser, logout, fetchUser }
+  /** 第三方登录：直接用后端发的 token 登录 */
+  async function loginWithToken(t: string) {
+    token.value = t
+    setToken(t)
+    try {
+      userInfo.value = await getCurrentUser()
+    } catch {
+      logout()
+    }
+  }
+
+  return { token, userInfo, login, setUser, logout, fetchUser, loginWithToken }
 })
 
 /** 后台 Admin Auth Store */

@@ -16,3 +16,11 @@ export function logout() {
 export function getCurrentUser() {
   return get('/api/auth/current')
 }
+
+export function getCaptcha() {
+  return get('/api/auth/captcha')
+}
+
+export function sendEmailCode(email: string) {
+  return post('/api/auth/send-email-code', { email })
+}

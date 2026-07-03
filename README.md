@@ -46,31 +46,57 @@
 - Vue Router 5
 - Axios (HTTP 请求)
 
-## 本地运行
+## 运行方式
 
-### 前置条件
+### 🐳 Docker 一键部署（推荐）
+
+确保已安装 [Docker](https://www.docker.com/) 和 Docker Compose。
+
+```bash
+# 在项目根目录（docker-compose.yml 所在目录）执行
+docker compose up -d
+
+# 查看启动日志
+docker compose logs -f
+
+# 停止
+docker compose down
+```
+
+启动后访问：
+- **前台页面**：http://localhost
+- **后台管理**：http://localhost/admin/login
+- **API 文档**：http://localhost/doc.html
+
+| 服务 | 容器名 | 端口 |
+|------|--------|------|
+| MySQL 8.4 | travel-mysql | 3307 (映射自容器 3306) |
+| Redis 7 | travel-redis | 6380 (映射自容器 6379) |
+| Spring Boot | travel-backend | 8080 |
+| Vue (Nginx) | travel-frontend | 80 |
+
+端口可在 `.env` 文件中修改。
+
+### 💻 本地开发运行
+
+#### 前置条件
 1. **MySQL 8.x** — 创建数据库 `travel` 并导入初始化脚本
 2. **Redis** — 启动本地 Redis 服务（默认端口 6379）
 3. **Java 21** + **Maven**
 4. **Node.js 22+** + **npm**
 
-### 1. 初始化数据库
+#### 1. 初始化数据库
 
 ```sql
--- 在 MySQL 中执行
 CREATE DATABASE travel DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 ```
 
-导入表结构和初始数据：
 ```bash
-# 方式一：使用 MySQL 命令行
 mysql -u root -p travel < travel/数据库/schema.sql
 mysql -u root -p travel < travel/数据库/data.sql
-
-# 方式二：在数据库管理工具（Navicat/DataGrip）中分别执行两个 SQL 文件
 ```
 
-### 2. 配置数据库连接
+#### 2. 配置连接
 
 编辑 `travel/src/main/resources/application.yml`，修改数据库连接和 Redis 连接：
 ```yaml
@@ -86,7 +112,7 @@ spring:
       password: 你的Redis密码（如果没有则留空）
 ```
 
-### 3. 启动后端
+#### 3. 启动后端
 
 ```bash
 cd travel
@@ -97,7 +123,7 @@ mvn spring-boot:run
 - API 文档：http://localhost:8080/doc.html
 - 测试接口：http://localhost:8080/api/test/hello
 
-### 4. 启动前端
+#### 4. 启动前端
 
 ```bash
 cd travel-front
@@ -107,7 +133,7 @@ npm run dev
 
 启动后访问：http://localhost:5173
 
-### 5. 默认账号
+#### 5. 默认账号
 
 | 角色 | 账号 | 密码 |
 |------|------|------|
