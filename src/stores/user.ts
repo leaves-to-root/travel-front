@@ -10,7 +10,7 @@ export const useUserStore = defineStore('user', () => {
   const token = ref(getToken())
   const userInfo = ref<User | null>(null)
 
-  async function login(data: { username?: string; phone?: string; password: string }) {
+  async function login(data: { loginType?: string; username?: string; password?: string; captchaKey?: string; captchaCode?: string; email?: string; emailCode?: string }) {
     const res: any = await userLogin(data)
     token.value = res.token
     setToken(res.token)

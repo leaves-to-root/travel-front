@@ -106,6 +106,9 @@ const navItems = [
                   <el-dropdown-item @click="router.push('/center/favorites')">
                     ❤ 我的收藏
                   </el-dropdown-item>
+                  <el-dropdown-item @click="router.push('/center/messages')">
+                    📬 系统消息
+                  </el-dropdown-item>
                   <el-dropdown-item @click="router.push('/cart')">
                     🛒 购物车
                   </el-dropdown-item>

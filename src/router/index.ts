@@ -51,6 +51,8 @@ const router = createRouter({
         { path: 'coupon', name: 'AdminCoupon', component: () => import('@/views/admin/CouponManage.vue') },
         { path: 'note', name: 'AdminNote', component: () => import('@/views/admin/NoteManage.vue') },
         { path: 'log', name: 'AdminLog', component: () => import('@/views/admin/OperationLog.vue') },
+        { path: 'message', name: 'AdminMessage', component: () => import('@/views/admin/MessageManage.vue') },
+        { path: 'analysis', name: 'AdminAnalysis', component: () => import('@/views/admin/UserAnalysis.vue') },
       ],
     },
   ],

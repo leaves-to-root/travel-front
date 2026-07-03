@@ -15,15 +15,19 @@ export interface PageResult<T = any> {
 }
 
 export interface LoginRequest {
-  username?: string
-  phone?: string
-  password: string
+  loginType?: string   // 'username' | 'email'，默认 username
+  username?: string    // 用户名登录
+  password?: string    // 用户名登录
+  captchaKey?: string  // 图形验证码 key
+  captchaCode?: string // 图形验证码
+  email?: string       // 邮箱登录
+  emailCode?: string   // 邮箱验证码
 }
 
 export interface RegisterRequest {
   username?: string
-  phone?: string
-  email?: string
+  email: string
+  emailCode: string
   password: string
   nickname?: string
 }
