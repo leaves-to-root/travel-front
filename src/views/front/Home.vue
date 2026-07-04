@@ -2,12 +2,12 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getHomeData } from '@/api/home'
+import { searchKeyword } from '@/stores/search'
 
 interface Banner { id: number; image: string; link: string; title: string }
 interface Product { id: number; title: string; subtitle: string; cover: string; price: number; marketPrice: number; score: number; sales: number }
 
 const router = useRouter()
-const searchKeyword = ref('')
 const banners = ref<Banner[]>([])
 const hotProducts = ref<Product[]>([])
 const specialProducts = ref<Product[]>([])
@@ -41,15 +41,6 @@ function goSearch() {
         <span class="gradient-text">探索世界</span><br/>遇见最美的风景
       </h1>
       <p class="hero-desc">发现最适合你的旅行线路，开启一段难忘的旅程</p>
-      <div class="hero-search">
-        <el-input
-          size="large"
-          placeholder="🔍  搜索目的地、景点..."
-          class="hero-inp"
-          v-model="searchKeyword"
-          @keyup.enter="goSearch"
-        />
-      </div>
       <div class="hero-stats">
         <div class="stat-item"><span class="stat-num">100+</span><span class="stat-label">热门目的地</span></div>
         <div class="stat-item"><span class="stat-num">5000+</span><span class="stat-label">满意客户</span></div>

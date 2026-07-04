@@ -5,11 +5,11 @@ import { useUserStore } from '@/stores/user'
 import { getToken } from '@/utils/auth'
 import { ElMessage } from 'element-plus'
 import { Search, Location, Headset } from '@element-plus/icons-vue'
+import { searchKeyword } from '@/stores/search'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
-const searchKeyword = ref('')
 const isLoggedIn = ref(!!getToken())
 const isScrolled = ref(false)
 
@@ -37,9 +37,16 @@ function logout() {
 
 const navItems = [
   { path: '/', label: '首页', icon: '🏠' },
-  { path: '/product', label: '旅游产品', icon: '🏖' },
+  { path: '/product', label: '旅游产品', icon: '🏖', clearSearch: true },
   { path: '/notes', label: '游记分享', icon: '📖' },
 ]
+
+function onNavClick(item: typeof navItems[0]) {
+  if (item.clearSearch) {
+    searchKeyword.value = ''
+  }
+  router.push(item.path)
+}
 </script>
 
 <template>
@@ -62,11 +69,11 @@ const navItems = [
 
         <!-- 导航链接 -->
         <nav class="nav-links">
-          <router-link v-for="item in navItems" :key="item.path" :to="item.path" class="nav-link" :class="{ active: (item.path === '/' ? route.path === '/' : route.path.startsWith(item.path)) }">
+          <a v-for="item in navItems" :key="item.path" class="nav-link" :class="{ active: (item.path === '/' ? route.path === '/' : route.path.startsWith(item.path)) }" @click="onNavClick(item)">
             <span class="nav-icon">{{ item.icon }}</span>
             {{ item.label }}
             <span class="nav-underline"></span>
-          </router-link>
+          </a>
         </nav>
 
         <!-- 搜索框 -->

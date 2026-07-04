@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getProductList } from '@/api/product'
 import { getCategoryTree } from '@/api/category'
 import type { Product, Category } from '@/api/types'
+import { searchKeyword } from '@/stores/search'
 
 const route = useRoute()
 const router = useRouter()
@@ -43,6 +44,14 @@ function onSortDefault() {
   page.value = 1
 }
 
+// 点击全部：清空分类、关键词和搜索框
+function onClearAll() {
+  categoryId.value = undefined
+  keyword.value = ''
+  searchKeyword.value = ''
+  page.value = 1
+}
+
 // 当前排序字段的图标
 function sortIcon(field: string) {
   if (sortBy.value !== field) return ''
@@ -70,6 +79,16 @@ onMounted(async () => {
 })
 
 watch([page, categoryId, sortBy, sortDir, keyword], load)
+
+// 监听路由变化：导航栏点击"旅游产品"时重新获取并清空搜索
+watch(() => route.query.keyword, (newKw) => {
+  const kw = (newKw as string) || ''
+  if (keyword.value !== kw) {
+    keyword.value = kw
+    searchKeyword.value = kw
+    page.value = 1
+  }
+})
 </script>
 
 <template>
@@ -81,7 +100,7 @@ watch([page, categoryId, sortBy, sortDir, keyword], load)
     <div class="filter-bar glass-card">
       <div class="filter-row">
         <span class="flabel">分类：</span>
-        <button class="ftag" :class="{ on: !categoryId }" @click="categoryId=undefined;page=1">全部</button>
+        <button class="ftag" :class="{ on: !categoryId }" @click="onClearAll">全部</button>
         <button v-for="c in categories" :key="c.id" class="ftag" :class="{ on: categoryId===c.id }" @click="categoryId=c.id;page=1">{{ c.name }}</button>
       </div>
       <div class="filter-row">
