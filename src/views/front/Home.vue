@@ -7,6 +7,7 @@ interface Banner { id: number; image: string; link: string; title: string }
 interface Product { id: number; title: string; subtitle: string; cover: string; price: number; marketPrice: number; score: number; sales: number }
 
 const router = useRouter()
+const searchKeyword = ref('')
 const banners = ref<Banner[]>([])
 const hotProducts = ref<Product[]>([])
 const specialProducts = ref<Product[]>([])
@@ -22,8 +23,11 @@ onMounted(async () => {
 })
 
 function goProduct(id: number) { router.push('/product/' + id) }
-function goSearch(keyword: string) {
-  if (keyword.trim()) router.push({ path: '/product', query: { keyword: keyword.trim() } })
+function goSearch() {
+  const keyword = searchKeyword.value.trim()
+  if (keyword) {
+    router.push({ path: '/product', query: { keyword } })
+  }
 }
 </script>
 
@@ -38,8 +42,13 @@ function goSearch(keyword: string) {
       </h1>
       <p class="hero-desc">发现最适合你的旅行线路，开启一段难忘的旅程</p>
       <div class="hero-search">
-        <el-input size="large" placeholder="🔍  搜索目的地、景点..." class="hero-inp"
-                  @keyup.enter="goSearch(($event.target as HTMLInputElement).value)" />
+        <el-input
+          size="large"
+          placeholder="🔍  搜索目的地、景点..."
+          class="hero-inp"
+          v-model="searchKeyword"
+          @keyup.enter="goSearch"
+        />
       </div>
       <div class="hero-stats">
         <div class="stat-item"><span class="stat-num">100+</span><span class="stat-label">热门目的地</span></div>
