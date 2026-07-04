@@ -28,6 +28,7 @@ const singleForm = ref({
 })
 
 const batchItems = ref<any[]>([])
+const batchCouponId = ref<number | undefined>(undefined)
 const myCoupons = ref<any[]>([])
 const loading = ref(false)
 
@@ -73,7 +74,6 @@ async function loadBatchItems() {
           personCount: c.quantity || 1,
           contactName: '',
           contactPhone: '',
-          couponId: undefined as number | undefined,
           remark: '',
         },
       })
@@ -99,13 +99,47 @@ const singleTotal = computed(() => {
   return (price || 0) * (singleForm.value.personCount || 1)
 })
 
+const singleCouponAmount = computed(() => {
+  if (!singleForm.value.couponId) return 0
+  const coupon = myCoupons.value.find((c: any) => c.id === singleForm.value.couponId)
+  if (!coupon || coupon.status !== 0) return 0
+  // 直减券：直接减免faceValue，不超过总金额
+  return Math.min(coupon.faceValue || 0, singleTotal.value)
+})
+
+const singlePayAmount = computed(() => {
+  return Math.max(0, singleTotal.value - singleCouponAmount.value)
+})
+
 const batchTotal = computed(() => {
   return batchItems.value.reduce((sum, item) => sum + itemPrice(item) * (item.form.personCount || 1), 0)
 })
 
+const batchCouponAmount = computed(() => {
+  if (!batchCouponId.value) return 0
+  const coupon = myCoupons.value.find((c: any) => c.id === batchCouponId.value)
+  if (!coupon || coupon.status !== 0) return 0
+  // 直减券：直接减免faceValue，不超过总金额
+  return Math.min(coupon.faceValue || 0, batchTotal.value)
+})
+
+const batchPayAmount = computed(() => {
+  return Math.max(0, batchTotal.value - batchCouponAmount.value)
+})
+
+function formatCouponLabel(coupon: any) {
+  return coupon?.name || ''
+}
+
+function validatePhone(phone: string) {
+  const phoneRegex = /^1[3-9]\d{9}$/
+  return phoneRegex.test(phone)
+}
+
 function validateSingle() {
   if (!singleForm.value.contactName) { ElMessage.warning('请填写联系人'); return false }
   if (!singleForm.value.contactPhone) { ElMessage.warning('请填写联系电话'); return false }
+  if (!validatePhone(singleForm.value.contactPhone)) { ElMessage.warning('请输入正确的手机号码格式'); return false }
   return true
 }
 
@@ -113,6 +147,7 @@ function validateBatch() {
   for (const item of batchItems.value) {
     if (!item.form.contactName) { ElMessage.warning('请填写 ' + item.product.title + ' 的联系人'); return false }
     if (!item.form.contactPhone) { ElMessage.warning('请填写 ' + item.product.title + ' 的联系电话'); return false }
+    if (!validatePhone(item.form.contactPhone)) { ElMessage.warning('请输入 ' + item.product.title + ' 的正确手机号码格式'); return false }
   }
   return true
 }
@@ -144,7 +179,7 @@ async function handleBatchCreate() {
   if (!validateBatch()) return
   loading.value = true
   try {
-    const reqs: CreateOrderRequest[] = batchItems.value.map((item) => {
+    const reqs: CreateOrderRequest[] = batchItems.value.map((item, index) => {
       const schedule = item.schedules.find((s: any) => s.id === item.form.scheduleId)
       return {
         productId: item.product.id,
@@ -154,7 +189,8 @@ async function handleBatchCreate() {
         contactPhone: item.form.contactPhone,
         personCount: item.form.personCount,
         remark: item.form.remark,
-        couponId: item.form.couponId,
+        // 购物车优惠券应用到第一个订单
+        couponId: index === 0 ? batchCouponId.value : undefined,
       }
     })
     await createBatchOrder(reqs)
@@ -199,7 +235,7 @@ async function handleBatchCreate() {
               </el-form-item>
               <el-form-item label="优惠券">
                 <el-select v-model="singleForm.couponId" placeholder="不使用优惠券" clearable>
-                  <el-option v-for="c in myCoupons.filter((x:any)=>x.status===0)" :key="c.id" :label="'优惠券 #' + c.couponId" :value="c.id" />
+                  <el-option v-for="c in myCoupons.filter((x:any)=>x.status===0)" :key="c.id" :label="formatCouponLabel(c)" :value="c.id" />
                 </el-select>
               </el-form-item>
               <el-form-item label="备注">
@@ -214,7 +250,9 @@ async function handleBatchCreate() {
             <p>产品：{{ product.title }}</p>
             <p>单价：¥{{ product.price }}</p>
             <p>人数：{{ singleForm.personCount }}</p>
-            <p class="total">合计：¥{{ singleTotal }}</p>
+            <p>合计：¥{{ singleTotal }}</p>
+            <p v-if="singleCouponAmount > 0" style="color: #67c23a;">优惠：-¥{{ singleCouponAmount.toFixed(2) }}</p>
+            <p class="total">实付：¥{{ singlePayAmount.toFixed(2) }}</p>
             <el-button type="primary" size="large" :loading="loading" @click="handleSingleCreate" style="width:100%">提交订单</el-button>
           </el-card>
         </el-col>
@@ -243,23 +281,27 @@ async function handleBatchCreate() {
               <el-form-item label="联系电话">
                 <el-input v-model="item.form.contactPhone" placeholder="请输入手机号" />
               </el-form-item>
-              <el-form-item label="优惠券">
-                <el-select v-model="item.form.couponId" placeholder="不使用优惠券" clearable>
-                  <el-option v-for="c in myCoupons.filter((x:any)=>x.status===0)" :key="c.id" :label="'优惠券 #' + c.couponId" :value="c.id" />
-                </el-select>
-              </el-form-item>
               <el-form-item label="备注">
                 <el-input v-model="item.form.remark" type="textarea" rows="2" />
               </el-form-item>
             </el-form>
-            <div class="item-total">小计：¥{{ itemPrice(item) * item.form.personCount }}</div>
+            <div class="item-total">小计：¥{{ (itemPrice(item) * item.form.personCount).toFixed(2) }}</div>
           </el-card>
         </el-col>
         <el-col :span="8">
           <el-card class="summary-card">
             <h4>订单摘要</h4>
             <p>共 {{ batchItems.length }} 笔订单</p>
-            <p class="total">合计：¥{{ batchTotal }}</p>
+            <p>合计：¥{{ batchTotal.toFixed(2) }}</p>
+            <el-form label-width="70px" style="margin-top: 12px;">
+              <el-form-item label="优惠券">
+                <el-select v-model="batchCouponId" placeholder="不使用优惠券" clearable style="width:100%">
+                  <el-option v-for="c in myCoupons.filter((x:any)=>x.status===0)" :key="c.id" :label="formatCouponLabel(c)" :value="c.id" />
+                </el-select>
+              </el-form-item>
+            </el-form>
+            <p v-if="batchCouponAmount > 0" style="color: #67c23a;">优惠：-¥{{ batchCouponAmount.toFixed(2) }}</p>
+            <p class="total">实付：¥{{ batchPayAmount.toFixed(2) }}</p>
             <el-button type="primary" size="large" :loading="loading" @click="handleBatchCreate" style="width:100%">一键付款</el-button>
           </el-card>
         </el-col>
