@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getProductList } from '@/api/product'
 import { getCategoryTree } from '@/api/category'
@@ -14,13 +14,47 @@ const page = ref(1); const total = ref(0)
 const keyword = ref('')
 const categoryId = ref<number | undefined>(undefined)
 const sortBy = ref('')
+const sortDir = ref('desc')
+
+// 每个排序字段各自的排序方向状态
+const sortDirs = reactive<Record<string, string>>({
+  price: 'asc',
+  sales: 'desc',
+  score: 'desc',
+})
+
+// 点击排序按钮：同字段切换方向，不同字段使用各自记住的方向
+function onSortClick(field: string) {
+  if (sortBy.value === field) {
+    // 同一字段：切换方向
+    sortDirs[field] = sortDirs[field] === 'asc' ? 'desc' : 'asc'
+  } else {
+    // 切换到新字段：使用该字段记住的方向
+    sortBy.value = field
+  }
+  sortDir.value = sortDirs[field]
+  page.value = 1
+}
+
+// 点击默认
+function onSortDefault() {
+  sortBy.value = ''
+  sortDir.value = 'desc'
+  page.value = 1
+}
+
+// 当前排序字段的图标
+function sortIcon(field: string) {
+  if (sortBy.value !== field) return ''
+  return sortDirs[field] === 'asc' ? '↑' : '↓'
+}
 
 async function load() {
   loading.value = true
   try {
     const res: any = await getProductList({
       keyword: keyword.value || undefined, categoryId: categoryId.value || undefined,
-      sortBy: sortBy.value || undefined, sortDir: sortBy.value === 'price' ? 'asc' : 'desc',
+      sortBy: sortBy.value || undefined, sortDir: sortBy.value ? sortDir.value : undefined,
       page: page.value, size: 12,
     })
     products.value = res.records || []; total.value = res.total || 0
@@ -35,7 +69,7 @@ onMounted(async () => {
   await load()
 })
 
-watch([page, categoryId, sortBy, keyword], load)
+watch([page, categoryId, sortBy, sortDir, keyword], load)
 </script>
 
 <template>
@@ -52,12 +86,10 @@ watch([page, categoryId, sortBy, keyword], load)
       </div>
       <div class="filter-row">
         <span class="flabel">排序：</span>
-        <el-radio-group v-model="sortBy" size="small">
-          <el-radio-button value="">默认</el-radio-button>
-          <el-radio-button value="price">价格</el-radio-button>
-          <el-radio-button value="sales">销量</el-radio-button>
-          <el-radio-button value="score">评分</el-radio-button>
-        </el-radio-group>
+        <button class="ftag" :class="{ on: !sortBy }" @click="onSortDefault">默认</button>
+        <button class="ftag" :class="{ on: sortBy==='price' }" @click="onSortClick('price')">价格{{ sortIcon('price') }}</button>
+        <button class="ftag" :class="{ on: sortBy==='sales' }" @click="onSortClick('sales')">销量{{ sortIcon('sales') }}</button>
+        <button class="ftag" :class="{ on: sortBy==='score' }" @click="onSortClick('score')">评分{{ sortIcon('score') }}</button>
       </div>
     </div>
 
