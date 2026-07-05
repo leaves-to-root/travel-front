@@ -4,7 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAdminStore } from '@/stores/user'
 import { getAdminToken } from '@/utils/auth'
 import { ElMessage } from 'element-plus'
-import { Monitor, User, Goods, Tickets, Picture, List, GoodsFilled, EditPen, Grid } from '@element-plus/icons-vue'
+import { Monitor, User, Goods, Tickets, Picture, List, GoodsFilled, EditPen, Document, ChatDotRound, DataAnalysis, Grid } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -23,7 +23,9 @@ const menuItems = [
   { path: '/admin/order', icon: List, label: '订单管理' },
   { path: '/admin/coupon', icon: GoodsFilled, label: '优惠券' },
   { path: '/admin/note', icon: EditPen, label: '游记管理' },
-
+  { path: '/admin/log', icon: Document, label: '操作日志' },
+  { path: '/admin/message', icon: ChatDotRound, label: '系统消息' },
+  { path: '/admin/analysis', icon: DataAnalysis, label: '用户分析' },
 ]
 </script>
 
